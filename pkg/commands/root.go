@@ -51,6 +51,8 @@ type CommonOptions struct {
 	RTEConfigData       string
 	PullIfNotPresent    bool
 	UpdaterType         string
+	OCIHookNotifier     bool
+	OCIHookListing      bool
 	rteConfigFile       string
 	plat                string
 	platVer             string
@@ -110,6 +112,8 @@ func InitFlags(flags *pflag.FlagSet, commonOpts *CommonOptions) {
 	flags.StringVar(&commonOpts.UpdaterType, "updater-type", "RTE", "type of updater to deploy - RTE or NFD")
 	flags.StringVar(&commonOpts.schedProfileName, "sched-profile-name", DefaultSchedulerProfileName, "inject scheduler profile name.")
 	flags.DurationVar(&commonOpts.schedResyncPeriod, "sched-resync-period", DefaultSchedulerResyncPeriod, "inject scheduler resync period.")
+	flags.BoolVar(&commonOpts.OCIHookNotifier, "oci-hook-notifier", true, "toggle support for the notifier OCI hook.")
+	flags.BoolVar(&commonOpts.OCIHookListing, "oci-hook-listing", false, "toggle support for the listing OCI hook.")
 }
 
 func PostSetupOptions(commonOpts *CommonOptions) error {

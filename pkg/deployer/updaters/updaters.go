@@ -38,6 +38,8 @@ type Options struct {
 	WaitCompletion   bool
 	PullIfNotPresent bool
 	RTEConfigData    string
+	OCIHookNotifier  bool
+	OCIHookListing   bool
 }
 
 func Deploy(env *deployer.Environment, updaterType string, opts Options) error {
@@ -49,7 +51,11 @@ func Deploy(env *deployer.Environment, updaterType string, opts Options) error {
 		return err
 	}
 
-	objs, err := getCreatableObjects(opts, env.Cli, env.Log, updaterType, namespace)
+	mcOpts := manifests.MachineConfigOptions{
+		EnableNotifier: opts.OCIHookNotifier,
+		EnableListing:  opts.OCIHookListing,
+	}
+	objs, err := getCreatableObjects(opts, env.Cli, env.Log, updaterType, namespace, mcOpts)
 	if err != nil {
 		return err
 	}
@@ -85,7 +91,11 @@ func Remove(env *deployer.Environment, updaterType string, opts Options) error {
 	}
 	namespace := ns.Name
 
-	objs, err := getDeletableObjects(opts, env.Cli, env.Log, updaterType, namespace)
+	mcOpts := manifests.MachineConfigOptions{
+		EnableNotifier: opts.OCIHookNotifier,
+		EnableListing:  opts.OCIHookListing,
+	}
+	objs, err := getDeletableObjects(opts, env.Cli, env.Log, updaterType, namespace, mcOpts)
 	if err != nil {
 		return err
 	}

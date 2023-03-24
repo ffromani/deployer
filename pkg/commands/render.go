@@ -139,7 +139,11 @@ func makeUpdaterObjects(commonOpts *CommonOptions) ([]client.Object, string, err
 		PullIfNotPresent: commonOpts.PullIfNotPresent,
 		RTEConfigData:    commonOpts.RTEConfigData,
 	}
-	objs, err := updaters.GetObjects(opts, commonOpts.UpdaterType, namespace)
+	mcOpts := manifests.MachineConfigOptions{
+		EnableNotifier: commonOpts.OCIHookNotifier,
+		EnableListing:  commonOpts.OCIHookListing,
+	}
+	objs, err := updaters.GetObjects(opts, commonOpts.UpdaterType, namespace, mcOpts)
 	if err != nil {
 		return nil, namespace, err
 	}

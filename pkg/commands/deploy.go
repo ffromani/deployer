@@ -91,6 +91,8 @@ func NewRemoveCommand(commonOpts *CommonOptions) *cobra.Command {
 				WaitCompletion:   opts.waitCompletion,
 				PullIfNotPresent: commonOpts.PullIfNotPresent,
 				RTEConfigData:    commonOpts.RTEConfigData,
+				OCIHookNotifier:  commonOpts.OCIHookNotifier,
+				OCIHookListing:   commonOpts.OCIHookListing,
 			})
 			if err != nil {
 				// intentionally keep going to remove as much as possible
@@ -209,6 +211,8 @@ func NewDeployTopologyUpdaterCommand(commonOpts *CommonOptions, opts *DeployOpti
 				WaitCompletion:   opts.waitCompletion,
 				PullIfNotPresent: commonOpts.PullIfNotPresent,
 				RTEConfigData:    commonOpts.RTEConfigData,
+				OCIHookNotifier:  commonOpts.OCIHookNotifier,
+				OCIHookListing:   commonOpts.OCIHookListing,
 			})
 		},
 		Args: cobra.NoArgs,
@@ -311,6 +315,8 @@ func NewRemoveTopologyUpdaterCommand(commonOpts *CommonOptions, opts *DeployOpti
 				WaitCompletion:   opts.waitCompletion,
 				PullIfNotPresent: commonOpts.PullIfNotPresent,
 				RTEConfigData:    commonOpts.RTEConfigData,
+				OCIHookNotifier:  commonOpts.OCIHookNotifier,
+				OCIHookListing:   commonOpts.OCIHookListing,
 			})
 		},
 		Args: cobra.NoArgs,
@@ -347,6 +353,8 @@ func deployOnCluster(commonOpts *CommonOptions, opts *DeployOptions) error {
 		WaitCompletion:   opts.waitCompletion,
 		PullIfNotPresent: commonOpts.PullIfNotPresent,
 		RTEConfigData:    commonOpts.RTEConfigData,
+		OCIHookNotifier:  commonOpts.OCIHookNotifier,
+		OCIHookListing:   commonOpts.OCIHookListing,
 	}); err != nil {
 		return err
 	}
