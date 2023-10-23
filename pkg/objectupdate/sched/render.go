@@ -84,6 +84,11 @@ func RenderConfig(data []byte, schedulerName string, params *manifests.ConfigPar
 			continue
 		}
 
+		if params.ProfileName != "" {
+			unstructured.SetNestedField(profile, params.ProfileName, "schedulerName")
+			updated = true
+		}
+
 		pluginConfigs, ok, err := unstructured.NestedSlice(profile, "pluginConfig")
 		if !ok || err != nil {
 			klog.ErrorS(err, "failed to process unstructured data", "pluginConfig", ok)
@@ -110,10 +115,13 @@ func RenderConfig(data []byte, schedulerName string, params *manifests.ConfigPar
 				return data, false, err
 			}
 
-			updated, err = updateArgs(args, params)
+			argsUpdated, err := updateArgs(args, params)
 			if err != nil {
 				klog.ErrorS(err, "failed to update unstructured data", "args", args, "params", params)
 				return data, false, err
+			}
+			if argsUpdated {
+				updated = true
 			}
 
 			if err := unstructured.SetNestedMap(pluginConf, args, "args"); err != nil {

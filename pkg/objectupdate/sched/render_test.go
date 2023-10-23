@@ -139,6 +139,80 @@ profiles:
 			initial:       configTemplateAllValues,
 			expected:      configTemplateAllValues,
 		},
+		{
+			name: "rename scheduler schedulerName multi",
+			params: &manifests.ConfigParams{
+				ProfileName: "renamed-sched",
+			},
+			initial: configTemplateAllValuesMulti,
+			expected: `apiVersion: kubescheduler.config.k8s.io/v1beta2
+kind: KubeSchedulerConfiguration
+leaderElection:
+  leaderElect: false
+profiles:
+- plugins:
+    filter:
+      disabled:
+      - name: '*'
+      enabled:
+      - name: NodeResourceFit
+  schedulerName: onlyResourceFit
+- pluginConfig:
+  - args:
+      cacheResyncPeriodSeconds: 5
+    name: NodeResourceTopologyMatch
+  plugins:
+    filter:
+      enabled:
+      - name: NodeResourceTopologyMatch
+    reserve:
+      enabled:
+      - name: NodeResourceTopologyMatch
+    score:
+      enabled:
+      - name: NodeResourceTopologyMatch
+  schedulerName: renamed-sched
+`,
+			expectedUpdate: true,
+		},
+		{
+			name: "resync updated from empty multi",
+			params: &manifests.ConfigParams{
+				Cache: &manifests.ConfigCacheParams{
+					ResyncPeriodSeconds: newInt64(42),
+				},
+			},
+			initial: configTemplateAllValuesMulti,
+			expected: `apiVersion: kubescheduler.config.k8s.io/v1beta2
+kind: KubeSchedulerConfiguration
+leaderElection:
+  leaderElect: false
+profiles:
+- plugins:
+    filter:
+      disabled:
+      - name: '*'
+      enabled:
+      - name: NodeResourceFit
+  schedulerName: onlyResourceFit
+- pluginConfig:
+  - args:
+      cacheResyncPeriodSeconds: 42
+    name: NodeResourceTopologyMatch
+  plugins:
+    filter:
+      enabled:
+      - name: NodeResourceTopologyMatch
+    reserve:
+      enabled:
+      - name: NodeResourceTopologyMatch
+    score:
+      enabled:
+      - name: NodeResourceTopologyMatch
+  schedulerName: test-sched-name
+`,
+			expectedUpdate: true,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -206,6 +280,64 @@ profiles:
       enabled:
       - name: NodeResourceTopologyMatch
   schedulerName: test-sched-name
+`
+
+var configTemplateAllValuesMulti string = `apiVersion: kubescheduler.config.k8s.io/v1beta2
+kind: KubeSchedulerConfiguration
+leaderElection:
+  leaderElect: false
+profiles:
+- plugins:
+    filter:
+      disabled:
+      - name: '*'
+      enabled:
+      - name: NodeResourceFit
+  schedulerName: onlyResourceFit
+- pluginConfig:
+  - args:
+      cacheResyncPeriodSeconds: 5
+    name: NodeResourceTopologyMatch
+  plugins:
+    filter:
+      enabled:
+      - name: NodeResourceTopologyMatch
+    reserve:
+      enabled:
+      - name: NodeResourceTopologyMatch
+    score:
+      enabled:
+      - name: NodeResourceTopologyMatch
+  schedulerName: test-sched-name
+`
+
+var configTemplateAllValuesMultiRenamed string = `apiVersion: kubescheduler.config.k8s.io/v1beta2
+kind: KubeSchedulerConfiguration
+leaderElection:
+  leaderElect: false
+profiles:
+- plugins:
+    filter:
+      disabled:
+      - name: '*'
+      enabled:
+      - name: NodeResourceFit
+  schedulerName: onlyResourceFit
+- pluginConfig:
+  - args:
+      cacheResyncPeriodSeconds: 5
+    name: NodeResourceTopologyMatch
+  plugins:
+    filter:
+      enabled:
+      - name: NodeResourceTopologyMatch
+    reserve:
+      enabled:
+      - name: NodeResourceTopologyMatch
+    score:
+      enabled:
+      - name: NodeResourceTopologyMatch
+  schedulerName: renamed-sched
 `
 
 func newInt64(value int64) *int64 {

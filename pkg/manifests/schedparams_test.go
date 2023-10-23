@@ -28,8 +28,8 @@ func TestDecodeSchedulerConfigFromData(t *testing.T) {
 		name           string
 		data           []byte
 		schedulerName  string
+		expectedFound  bool
 		expectedParams ConfigParams
-		expectedError  bool
 	}
 	testCases := []testCase{
 		{
@@ -37,7 +37,6 @@ func TestDecodeSchedulerConfigFromData(t *testing.T) {
 			data:           nil,
 			schedulerName:  "",
 			expectedParams: ConfigParams{},
-			expectedError:  false,
 		},
 		{
 			name: "bad scheduler name",
@@ -63,7 +62,6 @@ profiles:
 `),
 			schedulerName:  "topo-aware-scheduler",
 			expectedParams: ConfigParams{},
-			expectedError:  true,
 		},
 		{
 			name: "bad scheduler params name",
@@ -89,7 +87,6 @@ profiles:
 `),
 			schedulerName:  "topology-aware-scheduler",
 			expectedParams: ConfigParams{},
-			expectedError:  true,
 		},
 		{
 			name: "empty params",
@@ -115,9 +112,10 @@ profiles:
 `),
 			schedulerName: "topology-aware-scheduler",
 			expectedParams: ConfigParams{
-				Cache: &ConfigCacheParams{},
+				ProfileName: "topology-aware-scheduler",
+				Cache:       &ConfigCacheParams{},
 			},
-			expectedError: false,
+			expectedFound: true,
 		},
 		{
 			name: "nonzero resync period",
@@ -144,21 +142,34 @@ profiles:
 `),
 			schedulerName: "topology-aware-scheduler",
 			expectedParams: ConfigParams{
+				ProfileName: "topology-aware-scheduler",
 				Cache: &ConfigCacheParams{
 					ResyncPeriodSeconds: newInt64(5),
 				},
 			},
-			expectedError: false,
+			expectedFound: true,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			params, err := DecodeSchedulerConfigFromData(tc.data, tc.schedulerName)
-			if (err != nil) != tc.expectedError {
-				t.Fatalf("unexpected error [%v] expected=%v", err, tc.expectedError)
+			allParams, err := DecodeSchedulerProfilesFromData(tc.data)
+			if err != nil {
+				t.Fatalf("unexpected error [%v]", err)
 			}
-			if !reflect.DeepEqual(params, tc.expectedParams) {
+			if !tc.expectedFound {
+				return // nothing else to do
+			}
+
+			if len(allParams) != 1 {
+				t.Fatalf("unexpected params: found %d", len(allParams))
+			}
+			params := FindSchedulerProfileByName(allParams, tc.schedulerName)
+			if params == nil {
+				t.Fatalf("cannot find params for %q", tc.schedulerName)
+			}
+
+			if !reflect.DeepEqual(params, &tc.expectedParams) {
 				t.Fatalf("params got %q expected %q", toJSON(params), toJSON(tc.expectedParams))
 			}
 		})

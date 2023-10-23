@@ -35,15 +35,12 @@ type ConfigCacheParams struct {
 }
 
 type ConfigParams struct {
-	Cache *ConfigCacheParams
+	ProfileName string // can't be empty, so no need for pointer
+	Cache       *ConfigCacheParams
 }
 
-func DecodeSchedulerConfigFromData(data []byte, schedulerName string) (ConfigParams, error) {
-	params := ConfigParams{}
-	if schedulerName == "" {
-		klog.InfoS("missing scheduler name")
-		return params, nil
-	}
+func DecodeSchedulerProfilesFromData(data []byte) ([]ConfigParams, error) {
+	params := []ConfigParams{}
 
 	var r unstructured.Unstructured
 	if err := yaml.Unmarshal(data, &r.Object); err != nil {
@@ -67,10 +64,6 @@ func DecodeSchedulerConfigFromData(data []byte, schedulerName string) (ConfigPar
 		if !ok || err != nil {
 			klog.ErrorS(err, "failed to get profile name", "profileName", ok)
 			return params, nil
-		}
-
-		if profileName != schedulerName {
-			continue
 		}
 
 		pluginConfigs, ok, err := unstructured.NestedSlice(profile, "pluginConfig")
@@ -99,16 +92,34 @@ func DecodeSchedulerConfigFromData(data []byte, schedulerName string) (ConfigPar
 				return params, nil
 			}
 
-			return extractParams(args)
+			profileParams, err := extractParams(profileName, args)
+			if err != nil {
+				klog.ErrorS(err, "failed to extract params", "name", name, "profile", profileName)
+				continue
+			}
+
+			params = append(params, profileParams)
 		}
 	}
 
-	return params, fmt.Errorf("failed to find parameters for schedulerName %q", schedulerName)
+	return params, nil
+
 }
 
-func extractParams(args map[string]interface{}) (ConfigParams, error) {
+func FindSchedulerProfileByName(profileParams []ConfigParams, schedulerName string) *ConfigParams {
+	for idx := range profileParams {
+		params := &profileParams[idx]
+		if params.ProfileName == schedulerName {
+			return params
+		}
+	}
+	return nil
+}
+
+func extractParams(profileName string, args map[string]interface{}) (ConfigParams, error) {
 	params := ConfigParams{
-		Cache: &ConfigCacheParams{},
+		ProfileName: profileName,
+		Cache:       &ConfigCacheParams{},
 	}
 	// json quirk: we know it's int64, yet it's detected as float64
 	resyncPeriod, ok, err := unstructured.NestedFloat64(args, "cacheResyncPeriodSeconds")
